@@ -101,19 +101,22 @@ async function handleMessage(message) {
       }
   }
 }
-async function sendMessage(chatId, text, keyboard = null) {
+async function sendMessage(chatId, text, replyMarkup = null) {
   const payload = {
     chat_id: chatId,
-    text,
+    text: text,
     parse_mode: 'Markdown'
   };
-  if (keyboard) payload.reply_markup = { keyboard, resize_keyboard: true };
 
-  await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
+  if (replyMarkup) {
+    payload.reply_markup = replyMarkup;
+  }
+
+  try {
+    await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, payload);
+  } catch (error) {
+    console.error('Error sending message:', error.response?.data || error.message);
+  }
 }
 
 async function saveUserToDatabase(userId, userName, chatId) {
@@ -229,6 +232,7 @@ async function sendBroadcastMessage(message) {
     await new Promise(r => setTimeout(r, 100));
   }
 }
+
 
 
 
