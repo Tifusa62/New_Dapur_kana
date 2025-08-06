@@ -1,5 +1,6 @@
 // === Telegram & Supabase Bot (Vercel) - Versi Lengkap Owner/Admin ===
 const { createClient } = require('@supabase/supabase-js');
+const axios = require('axios');
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -10,13 +11,14 @@ const OWNER_USER_ID = 844673353;
 const ADMIN_USER_IDS = [81358099];
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end('Method Not Allowed');
   const data = req.body;
   if (data.message) await handleMessage(data.message);
   else if (data.callback_query) {} // handleCallbackQuery bisa ditambahkan jika dibutuhkan
   res.status(200).send('OK');
-}
+  }
+  module.exports = handler;
 
 async function handleMessage(message) {
   const chatId = message.chat.id;
@@ -207,4 +209,3 @@ async function sendBroadcastMessage(message) {
     await new Promise(r => setTimeout(r, 100));
   }
 }
-
