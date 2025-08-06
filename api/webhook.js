@@ -11,14 +11,32 @@ const OWNER_USER_ID = 844673353;
 const ADMIN_USER_IDS = [81358099];
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-async function handler(req, res) {
+const getRawBody = require('raw-body');
+
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end('Method Not Allowed');
-  const data = req.body;
-  if (data.message) await handleMessage(data.message);
-  else if (data.callback_query) {} // handleCallbackQuery bisa ditambahkan jika dibutuhkan
-  res.status(200).send('OK');
+
+  try {
+    const rawBody = await getRawBody(req);
+    const data = JSON.parse(rawBody.toString('utf8'));
+
+    if (data.message) await handleMessage(data.message);
+    else if (data.callback_query) {
+      // Tambahkan jika ingin handle callback
+    }
+
+    return res.status(200).send('OK');
+  } catch (err) {
+    console.error('Webhook Error:', err.message);
+    return res.status(500).send('Error handling update');
   }
-  module.exports = handler;
+};
+
+module.exports.config = {
+  api: {
+    bodyParser: false
+  }
+};
 
 async function handleMessage(message) {
   const chatId = message.chat.id;
@@ -212,5 +230,6 @@ async function sendBroadcastMessage(message) {
     await new Promise(r => setTimeout(r, 100));
   }
 }
+
 
 
