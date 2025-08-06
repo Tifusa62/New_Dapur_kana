@@ -126,8 +126,8 @@ async function showMenu(chatId) {
   const { data: menu } = await supabase.from('menu').select('*');
   if (!menu || menu.length === 0) return sendMessage(chatId, '📭 Menu belum tersedia');
 
-  let text = '*MENU DAPUR KANA:*
-\n';
+  let text = `*MENU DAPUR KANA:*
+\n`;
   menu.forEach((m, i) => {
     text += `${i + 1}. *${m.nama}* - Rp ${m.harga.toLocaleString()}\n${m.deskripsi || ''}\n\n`;
   });
@@ -212,4 +212,5 @@ async function sendBroadcastMessage(message) {
     await new Promise(r => setTimeout(r, 100));
   }
 }
+
 
