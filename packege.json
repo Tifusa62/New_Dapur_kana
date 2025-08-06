@@ -1,8 +1,14 @@
 {
   "name": "dapur-kana-bot",
   "version": "1.0.0",
-  "main": "index.js",
-  "license": "MIT",
+  "description": "Telegram Bot for Dapur Kana using Supabase & Vercel",
+  "main": "api/webhook.js",
+  "scripts": {
+    "start": "node api/webhook.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "dependencies": {
     "@supabase/supabase-js": "^2.42.5",
     "axios": "^1.6.8"
