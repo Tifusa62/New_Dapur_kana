@@ -19,6 +19,7 @@ module.exports = async function handler(req, res) {
   try {
     const rawBody = await getRawBody(req);
     const data = JSON.parse(rawBody.toString('utf8'));
+    console.log('📥 Webhook Data:', data);
 
     if (data.message) await handleMessage(data.message);
     else if (data.callback_query) {
@@ -43,6 +44,7 @@ async function handleMessage(message) {
   const text = message.text;
   const userId = message.from.id;
   const userName = message.from.first_name || 'User';
+
   await saveUserToDatabase(userId, userName, chatId);
 
   const isOwner = userId === OWNER_USER_ID;
@@ -50,58 +52,55 @@ async function handleMessage(message) {
 
   switch (text) {
     case '/start':
-      if (isOwner) sendOwnerWelcomeMessage(chatId, userName);
-      else sendWelcomeMessage(chatId, userName);
+      if (isOwner) await sendOwnerWelcomeMessage(chatId, userName);
+      else await sendWelcomeMessage(chatId, userName);
       break;
     case '🍽️ Lihat Menu':
-      showMenu(chatId);
+      await showMenu(chatId);
       break;
     case '🛒 Pesanan Saya':
-      showMyOrders(chatId, userId);
+      await showMyOrders(chatId, userId);
       break;
     case '🌐 Buka Website':
-      sendMessage(chatId, getWebsiteText());
+      await sendMessage(chatId, getWebsiteText());
       break;
     case '📞 Kontak':
-      sendMessage(chatId, getContactText());
+      await sendMessage(chatId, getContactText());
       break;
     case '❓ Bantuan':
-      sendMessage(chatId, getHelpText());
+      await sendMessage(chatId, getHelpText());
       break;
     case '👑 Panel Admin':
-      if (isAdmin) showAdminPanel(chatId);
-      else sendMessage(chatId, '❌ Anda tidak memiliki akses ke panel admin.');
+      if (isAdmin) await showAdminPanel(chatId);
+      else await sendMessage(chatId, '❌ Anda tidak memiliki akses ke panel admin.');
       break;
     case '📊 Laporan Pesanan':
-      if (isAdmin) showOrderReport(chatId);
+      if (isAdmin) await showOrderReport(chatId);
       break;
     case '📈 Statistik':
-      if (isAdmin) showStatistics(chatId);
+      if (isAdmin) await showStatistics(chatId);
       break;
     case '👥 Data User':
-      if (isAdmin) showUserData(chatId);
+      if (isAdmin) await showUserData(chatId);
       break;
     case '🍽️ Kelola Menu':
-      if (isAdmin) showMenuManagement(chatId);
+      if (isAdmin) await showMenuManagement(chatId);
       break;
     case '📢 Broadcast':
-  if (isOwner) {
-    sendMessage(chatId, `📢 Silakan ketik pesan seperti:
-
-/broadcast Halo semua!`);
-  }
-  break;
+      if (isOwner) {
+        await sendMessage(chatId, `📢 Silakan ketik pesan seperti:\n\n/broadcast Halo semua!`);
+      }
+      break;
     default:
       if (text.startsWith('/broadcast ') && isOwner) {
         const msg = text.replace('/broadcast ', '');
-        sendBroadcastMessage(msg);
-        sendMessage(chatId, '✅ Broadcast dikirim.');
+        await sendBroadcastMessage(msg);
+        await sendMessage(chatId, '✅ Broadcast dikirim.');
       } else {
-        sendMessage(chatId, '🤖 Maaf, perintah tidak dikenali. Ketik /start.');
+        await sendMessage(chatId, '🤖 Maaf, perintah tidak dikenali. Ketik /start.');
       }
   }
 }
-
 async function sendMessage(chatId, text, keyboard = null) {
   const payload = {
     chat_id: chatId,
@@ -230,6 +229,7 @@ async function sendBroadcastMessage(message) {
     await new Promise(r => setTimeout(r, 100));
   }
 }
+
 
 
 
