@@ -1,5 +1,5 @@
 // === Telegram & Supabase Bot (Vercel) - Versi Lengkap Owner/Admin ===
-import { createClient } from '@supabase/supabase-js';
+const { createClient } = require('@supabase/supabase-js');
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -207,3 +207,4 @@ async function sendBroadcastMessage(message) {
     await new Promise(r => setTimeout(r, 100));
   }
 }
+
