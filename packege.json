@@ -1,0 +1,9 @@
+{
+  "name": "telegram-dapur-kana",
+  "version": "1.0.0",
+  "main": "api/webhook.js",
+  "type": "module",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.0.0"
+  }
+}
