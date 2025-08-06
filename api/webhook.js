@@ -13,7 +13,13 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const getRawBody = require('raw-body');
 
-module.exports = async function handler(req, res) {
+export const config = {
+  api: {
+    bodyParser: false
+  }
+};
+
+export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end('Method Not Allowed');
 
   try {
@@ -21,23 +27,18 @@ module.exports = async function handler(req, res) {
     const data = JSON.parse(rawBody.toString('utf8'));
     console.log('📥 Webhook Data:', data);
 
-if (data.message) {
-  await handleMessage(data.message);
-} else if (data.callback_query) {
-  // Tambahkan jika ingin handle callback
-}
+    if (data.message) {
+      await handleMessage(data.message);
+    } else if (data.callback_query) {
+      // Tambahkan jika ingin handle callback
+    }
+
     return res.status(200).send('OK');
   } catch (err) {
     console.error('Webhook Error:', err.message);
     return res.status(500).send('Error handling update');
   }
-};
-
-module.exports.config = {
-  api: {
-    bodyParser: false
-  }
-};
+}
 
 async function handleMessage(message) {
 	console.log('✅ handleMessage triggered:', message.text);
@@ -247,3 +248,4 @@ async function sendBroadcastMessage(message) {
     await new Promise(r => setTimeout(r, 100));
   }
 }
+
