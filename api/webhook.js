@@ -21,13 +21,11 @@ module.exports = async function handler(req, res) {
     const data = JSON.parse(rawBody.toString('utf8'));
     console.log('📥 Webhook Data:', data);
 
-    if (data.message) {
-await handleMessage(data.message);
-    else if (data.callback_query) {
-      // Tambahkan jika ingin handle callback
-    }
+if (data.message) {
+  await handleMessage(data.message);
+} else if (data.callback_query) {
+  // Tambahkan jika ingin handle callback
 }
-
     return res.status(200).send('OK');
   } catch (err) {
     console.error('Webhook Error:', err.message);
@@ -42,6 +40,7 @@ module.exports.config = {
 };
 
 async function handleMessage(message) {
+	console.log('✅ handleMessage triggered:', message.text);
   const chatId = message.chat.id;
   const text = message.text;
   const userId = message.from.id;
@@ -147,11 +146,15 @@ async function sendWelcomeMessage(chatId, userName) {
   await sendMessage(chatId, text, keyboard);
 }
 
-function sendOwnerWelcomeMessage(chatId, userName) {
-  const text = `👑 Selamat datang Owner ${userName}!
-🎛️ Panel Admin Dapur Kana siap digunakan.`;
-  const keyboard = [['👑 Panel Admin', '📊 Laporan Pesanan'], ['📈 Statistik', '👥 Data User'], ['🍽️ Kelola Menu', '📢 Broadcast'], ['🍽️ Lihat Menu', '🌐 Buka Website']];
-  sendMessage(chatId, text, keyboard);
+async function sendOwnerWelcomeMessage(chatId, userName) {
+  const text = `👑 Selamat datang Owner ${userName}!\n🎛️ Panel Admin Dapur Kana siap digunakan.`;
+  const keyboard = [
+    ['👑 Panel Admin', '📊 Laporan Pesanan'],
+    ['📈 Statistik', '👥 Data User'],
+    ['🍽️ Kelola Menu', '📢 Broadcast'],
+    ['🍽️ Lihat Menu', '🌐 Buka Website']
+  ];
+  await sendMessage(chatId, text, keyboard);
 }
 
 async function showMenu(chatId) {
@@ -163,7 +166,7 @@ async function showMenu(chatId) {
   menu.forEach((m, i) => {
     text += `${i + 1}. *${m.nama}* - Rp ${m.harga.toLocaleString()}\n${m.deskripsi || ''}\n\n`;
   });
-  sendMessage(chatId, text);
+  await sendMessage(chatId, text);
 }
 
 async function showMyOrders(chatId, userId) {
@@ -174,7 +177,7 @@ async function showMyOrders(chatId, userId) {
   pesanan.forEach((p, i) => {
     text += `#${i + 1} - Rp ${p.total_harga}\n${p.metode} | ${p.status} | ${p.waktu}\n\n`;
   });
-  sendMessage(chatId, text);
+  await sendMessage(chatId, text);
 }
 
 function getWebsiteText() {
@@ -199,13 +202,13 @@ async function showAdminPanel(chatId) {
 📊 Total Pengguna: ${users.length}
 📦 Total Pesanan: ${orders.length}
 🍽️ Total Menu: ${menu.length}`;
-  sendMessage(chatId, text);
+  await sendMessage(chatId, text);
 }
 
 async function showOrderReport(chatId) {
   const { data } = await supabase.from('pesanan').select('*');
   const total = data.reduce((acc, p) => acc + p.total_harga, 0);
-  sendMessage(chatId, `📊 Total Transaksi: ${data.length}\n💰 Total Omzet: Rp ${total.toLocaleString()}`);
+  await sendMessage(chatId, `📊 Total Transaksi: ${data.length}\n💰 Total Omzet: Rp ${total.toLocaleString()}`);
 }
 
 async function showStatistics(chatId) {
@@ -218,13 +221,13 @@ async function showStatistics(chatId) {
   for (let status in grouped) {
     text += `• ${status}: ${grouped[status]} pesanan\n`;
   }
-  sendMessage(chatId, text);
+  await sendMessage(chatId, text);
 }
 
 async function showUserData(chatId) {
   const { data } = await supabase.from('user_telegram').select('*');
   const text = `📋 Total user: ${data.length}`;
-  sendMessage(chatId, text);
+  await sendMessage(chatId, text);
 }
 
 async function showMenuManagement(chatId) {
@@ -234,7 +237,7 @@ async function showMenuManagement(chatId) {
   data.forEach((m, i) => {
     text += `${i + 1}. *${m.nama}* - Rp ${m.harga.toLocaleString()}\n`;
   });
-  sendMessage(chatId, text);
+  await sendMessage(chatId, text);
 }
 
 async function sendBroadcastMessage(message) {
