@@ -21,10 +21,12 @@ module.exports = async function handler(req, res) {
     const data = JSON.parse(rawBody.toString('utf8'));
     console.log('📥 Webhook Data:', data);
 
-    if (data.message) await handleMessage(data.message);
+    if (data.message) {
+await handleMessage(data.message);
     else if (data.callback_query) {
       // Tambahkan jika ingin handle callback
     }
+}
 
     return res.status(200).send('OK');
   } catch (err) {
@@ -101,6 +103,7 @@ async function handleMessage(message) {
       }
   }
 }
+
 async function sendMessage(chatId, text, replyMarkup = null) {
   const payload = {
     chat_id: chatId,
@@ -128,11 +131,20 @@ async function saveUserToDatabase(userId, userName, chatId) {
   }, { onConflict: 'user_id' });
 }
 
-function sendWelcomeMessage(chatId, userName) {
-  const text = `🎉 Selamat datang di Dapur Kana, ${userName}!
-🍽️ Kami menyediakan berbagai hidangan lezat untuk Anda.`;
-  const keyboard = [['🍽️ Lihat Menu', '🛒 Pesanan Saya'], ['🌐 Buka Website', '📞 Kontak'], ['❓ Bantuan']];
-  sendMessage(chatId, text, keyboard);
+async function sendWelcomeMessage(chatId, userName) {
+  const text = `🎉 Selamat datang di Dapur Kana, ${userName}! ...`;
+
+  const keyboard = {
+    keyboard: [
+      ['🍽️ Lihat Menu', '🛒 Pesanan Saya'],
+      ['🌐 Buka Website', '📞 Kontak'],
+      ['❓ Bantuan']
+    ],
+    resize_keyboard: true,
+    one_time_keyboard: false
+  };
+
+  await sendMessage(chatId, text, keyboard);
 }
 
 function sendOwnerWelcomeMessage(chatId, userName) {
@@ -232,8 +244,3 @@ async function sendBroadcastMessage(message) {
     await new Promise(r => setTimeout(r, 100));
   }
 }
-
-
-
-
-
