@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Telegram Bot for Dapur Kana using Supabase & Vercel",
   "main": "api/webhook.js",
+  "type": "module",
   "scripts": {
     "start": "node api/webhook.js"
   },
@@ -10,10 +11,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@supabase/supabase-js": "^2.42.5",
-    "axios": "^1.6.8",
+    "axios": "^1.6.0",
+    "@supabase/supabase-js": "^2.0.0",
     "raw-body": "^2.5.2"
   }
 }
-
-
