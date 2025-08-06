@@ -134,30 +134,35 @@ async function saveUserToDatabase(userId, userName, chatId) {
 async function sendWelcomeMessage(chatId, userName) {
   const text = `🎉 Selamat datang di Dapur Kana, ${userName}! ...`;
 
-  const keyboard = {
-    keyboard: [
-      ['🍽️ Lihat Menu', '🛒 Pesanan Saya'],
-      ['🌐 Buka Website', '📞 Kontak'],
-      ['❓ Bantuan']
-    ],
-    resize_keyboard: true,
-    one_time_keyboard: false
-  };
+  await sendMessage(chatId, text, {
+  keyboard: [
+    ['🍽️ Lihat Menu', '🛒 Pesanan Saya'],
+    ['🌐 Buka Website', '📞 Kontak'],
+    ['❓ Bantuan']
+  ],
+  resize_keyboard: true,
+  one_time_keyboard: false
+});
 
-  await sendMessage(chatId, text, keyboard);
+  await sendMessage(chatId, text, {
+  keyboard: keyboard,
+  resize_keyboard: true,
+  one_time_keyboard: false
+});
 }
 
 async function sendOwnerWelcomeMessage(chatId, userName) {
   const text = `👑 Selamat datang Owner ${userName}!\n🎛️ Panel Admin Dapur Kana siap digunakan.`;
-  const keyboard = [
+  await sendMessage(chatId, text, {
+  keyboard: [
     ['👑 Panel Admin', '📊 Laporan Pesanan'],
     ['📈 Statistik', '👥 Data User'],
     ['🍽️ Kelola Menu', '📢 Broadcast'],
     ['🍽️ Lihat Menu', '🌐 Buka Website']
-  ];
-  await sendMessage(chatId, text, keyboard);
-}
-
+  ],
+  resize_keyboard: true,
+  one_time_keyboard: false
+});
 async function showMenu(chatId) {
   const { data: menu } = await supabase.from('menu').select('*');
   if (!menu || menu.length === 0) return sendMessage(chatId, '📭 Menu belum tersedia');
