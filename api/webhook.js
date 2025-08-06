@@ -67,9 +67,12 @@ async function handleMessage(message) {
       if (isAdmin) showMenuManagement(chatId);
       break;
     case '📢 Broadcast':
-      if (isOwner) sendMessage(chatId, '📢 Silakan ketik pesan seperti:
-/broadcast Halo semua!');
-      break;
+  if (isOwner) {
+    sendMessage(chatId, `📢 Silakan ketik pesan seperti:
+
+/broadcast Halo semua!`);
+  }
+  break;
     default:
       if (text.startsWith('/broadcast ') && isOwner) {
         const msg = text.replace('/broadcast ', '');
@@ -209,3 +212,4 @@ async function sendBroadcastMessage(message) {
     await new Promise(r => setTimeout(r, 100));
   }
 }
+
