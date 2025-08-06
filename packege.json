@@ -1,9 +1,10 @@
 {
-  "name": "telegram-dapur-kana",
+  "name": "dapur-kana-bot",
   "version": "1.0.0",
-  "main": "api/webhook.js",
-  "type": "module",
+  "main": "index.js",
+  "license": "MIT",
   "dependencies": {
-    "@supabase/supabase-js": "^2.0.0"
+    "@supabase/supabase-js": "^2.42.5",
+    "axios": "^1.6.8"
   }
 }
