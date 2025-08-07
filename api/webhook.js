@@ -156,7 +156,7 @@ Kami siap menyajikan berbagai pilihan menu rumahan yang enak, sehat, dan praktis
 
 ⚡ *Atau Order Instan Lewat Aplikasi:*
 🍴 GoFood: [Klik di sini](https://gofood.link/a/zVUowgj)  
-🛵 ShopeeFood: *Segera hadir!*  
+🛵 ShopeeFood: [Klik di sini](https://shopee.co.id/universal-link/now-food/shop/22294798?deep_and_deferred=1&shareChannel=copy_link)
 
 📞 *Kontak & Bantuan:*  
 Klik \`📞 Kontak\` untuk info lebih lanjut.
@@ -332,6 +332,7 @@ async function sendBroadcastMessage(message) {
 function isAdminUser(id) {
   return id === OWNER_USER_ID || ADMIN_USER_IDS.includes(id);
 }
+
 
 
 
