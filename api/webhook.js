@@ -6,7 +6,7 @@ import getRawBody from 'raw-body';
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
-const WEBSITE_URL = 'https://tifusa62.github.io/New-Dapur-Kana/index.html';
+const WEBSITE_URL = 'https://tifusa62.github.io/New-Dapur-Kana/index.html?uid=${user_id}';
 
 const OWNER_USER_ID = 844673353;
 const ADMIN_USER_IDS = [81358099];
@@ -252,6 +252,7 @@ async function sendBroadcastMessage(message) {
 function isAdminUser(id) {
   return id === OWNER_USER_ID || ADMIN_USER_IDS.includes(id);
 }
+
 
 
 
