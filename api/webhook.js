@@ -6,7 +6,6 @@ import getRawBody from 'raw-body';
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
-const WEBSITE_URL = 'https://tifusa62.github.io/New-Dapur-Kana/index.html?uid=${user_id}';
 
 const OWNER_USER_ID = 844673353;
 const ADMIN_USER_IDS = [81358099];
@@ -64,8 +63,15 @@ const isAdmin = isAdminUser(userId); // ← pakai fungsi yang kamu buat
       await showMyOrders(chatId, userId);
       break;
     case '🌐 Buka Website':
-      await sendMessage(chatId, getWebsiteText());
-      break;
+  await sendMessage(chatId, '🌐 Klik tombol di bawah untuk buka website:', {
+    inline_keyboard: [[
+      {
+        text: "🔗 Buka Website",
+        url: `https://tifusa62.github.io/New-Dapur-Kana/index.html?uid=${userId}`
+      }
+    ]]
+  });
+  break;
     case '📞 Kontak':
       await sendMessage(chatId, getContactText());
       break;
@@ -187,10 +193,6 @@ async function showMyOrders(chatId, userId) {
   await sendMessage(chatId, text);
 }
 
-function getWebsiteText() {
-  return `🌐 Website: [Klik di sini](${WEBSITE_URL})`;
-}
-
 function getContactText() {
   return `📞 Kontak Dapur Kana:\nWhatsapp: 0823-3493-5818\nEmail: oishidzato@gmail.com`;
 }
@@ -252,6 +254,7 @@ async function sendBroadcastMessage(message) {
 function isAdminUser(id) {
   return id === OWNER_USER_ID || ADMIN_USER_IDS.includes(id);
 }
+
 
 
 
