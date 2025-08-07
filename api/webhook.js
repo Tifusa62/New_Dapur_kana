@@ -167,7 +167,11 @@ async function showMenu(chatId) {
   let text = `*MENU DAPUR KANA:*
 \n`;
   menu.forEach((m, i) => {
-    text += `${i + 1}. *${m.nama}* - Rp ${m.harga.toLocaleString()}\n${m.deskripsi || ''}\n\n`;
+    const harga = (m.price !== null && m.price !== undefined)
+  ? `Rp ${Number(m.price).toLocaleString()}`
+  : 'Harga tidak tersedia';
+
+text += `${i + 1}. *${m.name}* - ${harga}\n${m.description || ''}\n\n`;
   });
   await sendMessage(chatId, text);
 }
@@ -250,6 +254,7 @@ async function sendBroadcastMessage(message) {
     await new Promise(r => setTimeout(r, 100));
   }
 }
+
 
 
 
