@@ -9,7 +9,7 @@ const SUPABASE_KEY = process.env.SUPABASE_KEY;
 const WEBSITE_URL = 'https://tifusa62.github.io/New-Dapur-Kana/index.html';
 
 const OWNER_USER_ID = 844673353;
-const ADMIN_USER_IDS = 81358099;
+const ADMIN_USER_IDS = [81358099];
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 
@@ -257,6 +257,7 @@ async function sendBroadcastMessage(message) {
 function isAdminUser(id) {
   return id === OWNER_USER_ID || ADMIN_USER_IDS.includes(id);
 }
+
 
 
 
