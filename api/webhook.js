@@ -238,15 +238,10 @@ async function showUserData(chatId) {
 }
 
 async function showMenuManagement(chatId) {
-  const { data } = await supabase.from('menu').select('*');
-  if (!data || data.length === 0) return sendMessage(chatId, 'Menu kosong');
-  let text = '*Kelola Menu:*\n';
-  data.forEach((m, i) => {
-    text += `${i + 1}. *${m.nama}* - Rp ${m.harga.toLocaleString()}\n`;
-  });
+  const url = 'https://tifusa62.github.io/New-Dapur-Kana/owner.html';
+  const text = `🛠️ *Kelola Menu*\n\nKlik link berikut untuk mengelola menu Dapur Kana:\n${url}`;
   await sendMessage(chatId, text);
 }
-
 async function sendBroadcastMessage(message) {
   const { data: users } = await supabase.from('user_telegram').select('chat_id');
   for (let u of users) {
@@ -257,6 +252,7 @@ async function sendBroadcastMessage(message) {
 function isAdminUser(id) {
   return id === OWNER_USER_ID || ADMIN_USER_IDS.includes(id);
 }
+
 
 
 
