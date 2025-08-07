@@ -159,6 +159,7 @@ async function sendOwnerWelcomeMessage(chatId, userName) {
   resize_keyboard: true,
   one_time_keyboard: false
 });
+}
 async function showMenu(chatId) {
   const { data: menu } = await supabase.from('menu').select('*');
   if (!menu || menu.length === 0) return sendMessage(chatId, '📭 Menu belum tersedia');
@@ -249,5 +250,6 @@ async function sendBroadcastMessage(message) {
     await new Promise(r => setTimeout(r, 100));
   }
 }
+
 
 
