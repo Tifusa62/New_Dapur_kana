@@ -134,21 +134,17 @@ async function saveUserToDatabase(userId, userName, chatId) {
 async function sendWelcomeMessage(chatId, userName) {
   const text = `🎉 Selamat datang di Dapur Kana, ${userName}! ...`;
 
-  await sendMessage(chatId, text, {
-  keyboard: [
-    ['🍽️ Lihat Menu', '🛒 Pesanan Saya'],
-    ['🌐 Buka Website', '📞 Kontak'],
-    ['❓ Bantuan']
-  ],
-  resize_keyboard: true,
-  one_time_keyboard: false
-});
+  const keyboard = {
+    keyboard: [
+      ['🍽️ Lihat Menu', '🛒 Pesanan Saya'],
+      ['🌐 Buka Website', '📞 Kontak'],
+      ['❓ Bantuan']
+    ],
+    resize_keyboard: true,
+    one_time_keyboard: false
+  };
 
-  await sendMessage(chatId, text, {
-  keyboard: keyboard,
-  resize_keyboard: true,
-  one_time_keyboard: false
-});
+  await sendMessage(chatId, text, keyboard);
 }
 
 async function sendOwnerWelcomeMessage(chatId, userName) {
@@ -253,3 +249,4 @@ async function sendBroadcastMessage(message) {
     await new Promise(r => setTimeout(r, 100));
   }
 }
+
