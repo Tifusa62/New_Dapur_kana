@@ -183,8 +183,7 @@ text += `${i + 1}. *${m.name}* - ${harga}\n${m.description || ''}\n\n`;
 }
 
 async function showMyOrders(chatId, userId) {
-  // Ambil data user untuk ambil nama
-  const { data: userData, error: userError } = await supabase
+  const { data: userData } = await supabase
     .from('user_telegram')
     .select('nama')
     .eq('user_id', userId)
@@ -192,36 +191,59 @@ async function showMyOrders(chatId, userId) {
 
   const userName = userData?.nama || 'Pengguna';
 
-  // Ambil pesanan berdasarkan telegram_user_id
-  const { data: pesanan, error } = await supabase
+  const { data: pesananList } = await supabase
     .from('pesanan')
-    .select('id, metode, created_at, akses_via, item')
+    .select('id, metode, created_at, akses_via')
     .eq('telegram_user_id', userId)
     .order('created_at', { ascending: false });
 
-  if (error || userError) {
-    console.error('❌ Gagal ambil data:', error || userError);
-    return sendMessage(chatId, '⚠️ Terjadi kesalahan saat mengambil data pesanan.');
-  }
-
-  if (!pesanan || pesanan.length === 0) {
+  if (!pesananList || pesananList.length === 0) {
     return sendMessage(chatId, `📭 Hai *${userName}*, kamu belum pernah melakukan pesanan.`);
   }
 
   let text = `*📦 Riwayat Pesanan untuk ${userName}:*\n\n`;
 
-  for (let i = 0; i < pesanan.length; i++) {
-    const p = pesanan[i];
+  for (let i = 0; i < pesananList.length; i++) {
+    const p = pesananList[i];
+
     const tgl = new Date(p.created_at).toLocaleString('id-ID', {
       dateStyle: 'medium',
       timeStyle: 'short',
       timeZone: 'Asia/Jakarta'
     });
 
+    // Ambil item pesanan untuk id_pesanan ini
+    const { data: itemList } = await supabase
+      .from('item_pesanan')
+      .select('id_menu, jumlah')
+      .eq('id_pesanan', p.id);
+
+    // Ambil data menu untuk semua id_menu (sekali query)
+    const idMenuList = itemList?.map(item => item.id_menu) || [];
+    let menuMap = {};
+
+    if (idMenuList.length > 0) {
+      const { data: menuList } = await supabase
+        .from('menu')
+        .select('id, name')
+        .in('id', idMenuList);
+
+      menuList.forEach(menu => {
+        menuMap[menu.id] = menu.name;
+      });
+    }
+
+    const itemText = itemList.length > 0
+      ? itemList.map(item => {
+          const name = menuMap[item.id_menu] || 'Item Tidak Dikenal';
+          return `${name} x${item.jumlah}`;
+        }).join(', ')
+      : 'Tidak ada item';
+
     text += `*#${i + 1}* - _${tgl}_\n`;
     text += `• Metode: *${p.metode}*\n`;
     text += `• Via: ${p.akses_via || '-'}\n`;
-    text += `• Item: ${p.item || 'Tidak disebutkan'}\n\n`;
+    text += `• Item: ${itemText}\n\n`;
   }
 
   await sendMessage(chatId, text);
@@ -288,6 +310,7 @@ async function sendBroadcastMessage(message) {
 function isAdminUser(id) {
   return id === OWNER_USER_ID || ADMIN_USER_IDS.includes(id);
 }
+
 
 
 
