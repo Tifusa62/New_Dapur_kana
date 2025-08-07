@@ -138,7 +138,30 @@ async function saveUserToDatabase(userId, userName, chatId) {
 }
 
 async function sendWelcomeMessage(chatId, userName) {
-  const text = `🎉 Selamat datang di Dapur Kana, ${userName}! ...`;
+  const text = `🎉 Selamat datang di *Dapur Kana*, ${userName}!  
+Kami siap menyajikan berbagai pilihan menu rumahan yang enak, sehat, dan praktis 🍱🍰
+
+📌 *Cara Menggunakan Bot Ini:*
+1️⃣ Gunakan tombol menu di bawah untuk mulai berinteraksi  
+2️⃣ Pilih \`🍽️ Lihat Menu\` untuk melihat daftar makanan & minuman  
+3️⃣ Klik \`🛒 Pesanan Saya\` untuk melihat riwayat pesananmu  
+4️⃣ Pilih \`🌐 Buka Website\` untuk pemesanan lengkap  
+
+🛍️ *Cara Pemesanan via Website:*
+1. Klik tombol \`🌐 Buka Website\`  
+2. Pilih menu favoritmu, isi jumlah & data pesanan  
+3. Pilih metode pembayaran (COD / Transfer)  
+4. Jika Transfer, upload bukti pembayaran  
+5. Klik *Pesan Sekarang* dan tunggu konfirmasi  
+
+⚡ *Atau Order Instan Lewat Aplikasi:*
+🍴 GoFood: [Klik di sini](https://gofood.link/a/zVUowgj)  
+🛵 ShopeeFood: *Segera hadir!*  
+
+📞 *Kontak & Bantuan:*  
+Klik \`📞 Kontak\` untuk info lebih lanjut.
+
+Terima kasih sudah memilih Dapur Kana! 💚`;
 
   const keyboard = {
     keyboard: [
@@ -152,7 +175,6 @@ async function sendWelcomeMessage(chatId, userName) {
 
   await sendMessage(chatId, text, keyboard);
 }
-
 async function sendOwnerWelcomeMessage(chatId, userName) {
   const text = `👑 Selamat datang Owner ${userName}!\n🎛️ Panel Admin Dapur Kana siap digunakan.`;
   await sendMessage(chatId, text, {
@@ -310,6 +332,7 @@ async function sendBroadcastMessage(message) {
 function isAdminUser(id) {
   return id === OWNER_USER_ID || ADMIN_USER_IDS.includes(id);
 }
+
 
 
 
