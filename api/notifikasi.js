@@ -1,5 +1,3 @@
-// /pages/api/notifikasi.js
-
 import { createClient } from '@supabase/supabase-js';
 import axios from 'axios';
 
@@ -11,14 +9,8 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-export const config = {
-  api: {
-    bodyParser: true, // Pastikan ini true agar req.body bisa dibaca
-  },
-};
-
-// notifikasi.js
 export default async function handler(req, res) {
+  // CORS handling
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -32,7 +24,12 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-    // Ambil data pesanan
+  try {
+    const { id_pesanan } = req.body;
+    if (!id_pesanan) {
+      return res.status(400).json({ error: 'id_pesanan is required' });
+    }
+
     const { data: pesanan, error: pesananError } = await supabase
       .from('pesanan')
       .select('*')
@@ -44,7 +41,6 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: 'Pesanan not found' });
     }
 
-    // Ambil item pesanan
     const { data: items, error: itemError } = await supabase
       .from('item_pesanan')
       .select('*')
@@ -55,7 +51,6 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Gagal ambil item pesanan' });
     }
 
-    // Format rincian item
     let totalHarga = 0;
     const itemText = items.map((item, index) => {
       totalHarga += item.subtotal;
@@ -76,10 +71,10 @@ ${itemText}
 
 💳 *Total: Rp ${totalHarga.toLocaleString()}*`;
 
-    // === Kirim ke OWNER
+    // Kirim ke OWNER
     await sendTelegramMessage(OWNER_CHAT_ID, textPesanan);
 
-    // === Kirim ke USER jika via Telegram
+    // Kirim ke USER jika via Telegram
     if (pesanan.akses_via === 'telegram' && pesanan.telegram_user_id) {
       const { data: user } = await supabase
         .from('user_telegram')
