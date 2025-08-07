@@ -183,20 +183,46 @@ text += `${i + 1}. *${m.name}* - ${harga}\n${m.description || ''}\n\n`;
 }
 
 async function showMyOrders(chatId, userId) {
-  const { data: pesanan } = await supabase
-    .from('pesanan')
-    .select('*')
-    .eq('telegram_user_id', userId); // ← ini kuncinya
+  // Ambil data user untuk ambil nama
+  const { data: userData, error: userError } = await supabase
+    .from('user_telegram')
+    .select('nama')
+    .eq('user_id', userId)
+    .single();
 
-  if (!pesanan || pesanan.length === 0) {
-    return sendMessage(chatId, '🚫 Tidak ada pesanan');
+  const userName = userData?.nama || 'Pengguna';
+
+  // Ambil pesanan berdasarkan telegram_user_id
+  const { data: pesanan, error } = await supabase
+    .from('pesanan')
+    .select('id, metode, created_at, akses_via, item')
+    .eq('telegram_user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error || userError) {
+    console.error('❌ Gagal ambil data:', error || userError);
+    return sendMessage(chatId, '⚠️ Terjadi kesalahan saat mengambil data pesanan.');
   }
 
-  let text = '*PESANAN ANDA:*\n';
-  pesanan.forEach((p, i) => {
-    const total = p.total_harga ? `Rp ${p.total_harga.toLocaleString()}` : 'Total tidak tersedia';
-    text += `#${i + 1} - ${total}\n${p.metode} | ${p.akses_via || ''} | ${p.created_at}\n\n`;
-  });
+  if (!pesanan || pesanan.length === 0) {
+    return sendMessage(chatId, `📭 Hai *${userName}*, kamu belum pernah melakukan pesanan.`);
+  }
+
+  let text = `*📦 Riwayat Pesanan untuk ${userName}:*\n\n`;
+
+  for (let i = 0; i < pesanan.length; i++) {
+    const p = pesanan[i];
+    const tgl = new Date(p.created_at).toLocaleString('id-ID', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+      timeZone: 'Asia/Jakarta'
+    });
+
+    text += `*#${i + 1}* - _${tgl}_\n`;
+    text += `• Metode: *${p.metode}*\n`;
+    text += `• Via: ${p.akses_via || '-'}\n`;
+    text += `• Item: ${p.item || 'Tidak disebutkan'}\n\n`;
+  }
 
   await sendMessage(chatId, text);
 }
@@ -262,6 +288,7 @@ async function sendBroadcastMessage(message) {
 function isAdminUser(id) {
   return id === OWNER_USER_ID || ADMIN_USER_IDS.includes(id);
 }
+
 
 
 
