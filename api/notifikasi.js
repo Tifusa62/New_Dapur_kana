@@ -1,43 +1,65 @@
-// /api/notifikasi.js
+// /pages/api/notifikasi.js
+
 import { createClient } from '@supabase/supabase-js';
 import axios from 'axios';
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const OWNER_CHAT_ID = 844673353; // Telegram chat ID Owner
-const OWNER_USERNAME = 'priliautami'; // username Telegram owner (tanpa @)
+const OWNER_CHAT_ID = 844673353;
+const OWNER_USERNAME = 'priliautami';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+export const config = {
+  api: {
+    bodyParser: true, // Pastikan ini true agar req.body bisa dibaca
+  },
+};
+
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).end('Method Not Allowed');
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
 
   try {
     const { id_pesanan } = req.body;
-    if (!id_pesanan) return res.status(400).send('Missing id_pesanan');
+    if (!id_pesanan) {
+      return res.status(400).json({ error: 'id_pesanan is required' });
+    }
 
     // Ambil data pesanan
-    const { data: pesanan, error } = await supabase
+    const { data: pesanan, error: pesananError } = await supabase
       .from('pesanan')
       .select('*')
       .eq('id', id_pesanan)
       .single();
-    if (error || !pesanan) return res.status(404).send('Pesanan not found');
+
+    if (pesananError || !pesanan) {
+      console.error('❌ Pesanan error:', pesananError);
+      return res.status(404).json({ error: 'Pesanan not found' });
+    }
 
     // Ambil item pesanan
-    const { data: itemList } = await supabase
+    const { data: items, error: itemError } = await supabase
       .from('item_pesanan')
       .select('*')
       .eq('id_pesanan', id_pesanan);
 
+    if (itemError) {
+      console.error('❌ Item error:', itemError);
+      return res.status(500).json({ error: 'Gagal ambil item pesanan' });
+    }
+
+    // Format rincian item
     let totalHarga = 0;
-    const itemText = itemList.map((item, i) => {
+    const itemText = items.map((item, index) => {
       totalHarga += item.subtotal;
-      return `${i + 1}. ${item.nama_item} x ${item.jumlah} = Rp ${item.subtotal.toLocaleString()}`;
+      return `${index + 1}. ${item.nama_item} x ${item.jumlah} = Rp ${item.subtotal.toLocaleString()}`;
     }).join('\n');
 
-    const textPesanan = `🛒 *Pesanan Baru Masuk!*\n
+    const textPesanan = `🛒 *Pesanan Baru Masuk!*
+
 👤 *${pesanan.nama}*
 📍 ${pesanan.alamat}
 📞 ${pesanan.no_tlp}
@@ -53,7 +75,7 @@ ${itemText}
     // === Kirim ke OWNER
     await sendTelegramMessage(OWNER_CHAT_ID, textPesanan);
 
-    // === Kirim ke USER (jika via Telegram)
+    // === Kirim ke USER jika via Telegram
     if (pesanan.akses_via === 'telegram' && pesanan.telegram_user_id) {
       const { data: user } = await supabase
         .from('user_telegram')
@@ -61,23 +83,26 @@ ${itemText}
         .eq('user_id', pesanan.telegram_user_id)
         .single();
 
-      if (user && user.chat_id) {
+      if (user?.chat_id) {
         const userText = `✅ *Pesanan kamu sudah kami terima!*\n\n${textPesanan}`;
         const tombolHubungi = {
-          inline_keyboard: [[{
-            text: "🧑‍🍳 Hubungi Penjual",
-            url: `https://t.me/${OWNER_USERNAME}`
-          }]]
+          inline_keyboard: [[
+            {
+              text: "🧑‍🍳 Hubungi Penjual",
+              url: `https://t.me/${OWNER_USERNAME}`
+            }
+          ]]
         };
 
         await sendTelegramMessage(user.chat_id, userText, tombolHubungi);
       }
     }
 
-    return res.status(200).send('Notifikasi terkirim');
+    return res.status(200).json({ success: true, message: 'Notifikasi terkirim' });
+
   } catch (err) {
     console.error('❌ Error Notifikasi:', err);
-    return res.status(500).send('Server Error');
+    return res.status(500).json({ error: 'Server error' });
   }
 }
 
