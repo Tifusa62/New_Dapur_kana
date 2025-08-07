@@ -183,13 +183,21 @@ text += `${i + 1}. *${m.name}* - ${harga}\n${m.description || ''}\n\n`;
 }
 
 async function showMyOrders(chatId, userId) {
-  const { data: pesanan } = await supabase.from('pesanan').select('*').eq('user_id', userId);
-  if (!pesanan || pesanan.length === 0) return sendMessage(chatId, '🚫 Tidak ada pesanan');
+  const { data: pesanan } = await supabase
+    .from('pesanan')
+    .select('*')
+    .eq('telegram_user_id', userId); // ← ini kuncinya
+
+  if (!pesanan || pesanan.length === 0) {
+    return sendMessage(chatId, '🚫 Tidak ada pesanan');
+  }
 
   let text = '*PESANAN ANDA:*\n';
   pesanan.forEach((p, i) => {
-    text += `#${i + 1} - Rp ${p.total_harga}\n${p.metode} | ${p.status} | ${p.waktu}\n\n`;
+    const total = p.total_harga ? `Rp ${p.total_harga.toLocaleString()}` : 'Total tidak tersedia';
+    text += `#${i + 1} - ${total}\n${p.metode} | ${p.akses_via || ''} | ${p.created_at}\n\n`;
   });
+
   await sendMessage(chatId, text);
 }
 
@@ -254,6 +262,7 @@ async function sendBroadcastMessage(message) {
 function isAdminUser(id) {
   return id === OWNER_USER_ID || ADMIN_USER_IDS.includes(id);
 }
+
 
 
 
