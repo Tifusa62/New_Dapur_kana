@@ -9,7 +9,7 @@ const SUPABASE_KEY = process.env.SUPABASE_KEY;
 const WEBSITE_URL = 'https://tifusa62.github.io/New-Dapur-Kana/index.html';
 
 const OWNER_USER_ID = 844673353;
-const ADMIN_USER_IDS = [81358099];
+const ADMIN_USER_IDS = 81358099;
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 
@@ -50,7 +50,7 @@ async function handleMessage(message) {
   await saveUserToDatabase(userId, userName, chatId);
 
   const isOwner = userId === OWNER_USER_ID;
-  const isAdmin = ADMIN_USER_IDS.includes(userId);
+const isAdmin = isAdminUser(userId); // ← pakai fungsi yang kamu buat
 
   switch (text) {
     case '/start':
@@ -254,6 +254,10 @@ async function sendBroadcastMessage(message) {
     await new Promise(r => setTimeout(r, 100));
   }
 }
+function isAdminUser(id) {
+  return id === OWNER_USER_ID || ADMIN_USER_IDS.includes(id);
+}
+
 
 
 
