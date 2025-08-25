@@ -322,15 +322,94 @@ async function showMenuManagement(chatId) {
   const text = `🛠️ *Kelola Menu*\n\nKlik link berikut untuk mengelola menu Dapur Kana:\n${url}`;
   await sendMessage(chatId, text);
 }
-async function sendBroadcastMessage(message) {
-  const { data: users } = await supabase.from('user_telegram').select('chat_id');
+// --- STATE SEMENTARA UNTUK ADMIN YANG AKTIF BROADCAST ---
+const adminState = {}; 
+// { chat_id: "waiting_broadcast" }
+
+async function handleMessage(msg) {
+  const chatId = msg.chat.id;
+  const text = msg.text;
+  const fromId = msg.from.id;
+
+  // ✅ Hanya admin yang boleh broadcast
+  if (text === "/broadcast" && isAdminUser(fromId)) {
+    adminState[fromId] = "waiting_broadcast";
+    await sendMessage(chatId, "📢 Silakan ketik pesan broadcast atau kirim foto + caption.");
+    return;
+  }
+
+  // ✅ Kalau admin sedang mode broadcast
+  if (adminState[fromId] === "waiting_broadcast") {
+    if (msg.photo) {
+      // Admin mengirim foto
+      const fileId = msg.photo[msg.photo.length - 1].file_id; // ambil resolusi terbesar
+      const caption = msg.caption || "";
+      await sendBroadcastMessage({ message: caption, photo: fileId });
+      await sendMessage(chatId, "✅ Broadcast foto terkirim.");
+    } else if (text) {
+      // Admin mengirim teks
+      await sendBroadcastMessage({ message: text });
+      await sendMessage(chatId, "✅ Broadcast teks terkirim.");
+    }
+    delete adminState[fromId];
+    return;
+  }
+
+  // ... pesan normal lainnya
+}
+
+// --- Kirim pesan teks ---
+async function sendMessage(chatId, text) {
+  await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, text })
+  });
+}
+
+// --- Broadcast ke semua user ---
+async function sendBroadcastMessage({ message, photo }) {
+  const { data: users, error } = await supabase.from("user_telegram").select("chat_id");
+  if (error) {
+    console.error("Error ambil user:", error);
+    return;
+  }
+
   for (let u of users) {
-    await sendMessage(u.chat_id, `📢 ${message}`);
-    await new Promise(r => setTimeout(r, 100));
+    try {
+      if (photo) {
+        // broadcast foto (pakai file_id supaya cepat, tidak perlu URL)
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: u.chat_id,
+            photo: photo,
+            caption: `📢 ${message || ""}`
+          })
+        });
+      } else {
+        // broadcast teks
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: u.chat_id,
+            text: `📢 ${message}`
+          })
+        });
+      }
+      await new Promise(r => setTimeout(r, 200)); // biar aman flood limit
+    } catch (err) {
+      console.error("Gagal kirim ke", u.chat_id, err);
+    }
   }
 }
+
+// --- Cek admin ---
 function isAdminUser(id) {
-  return id === OWNER_USER_ID || ADMIN_USER_IDS.includes(id);
+  const admins = [OWNER_USER_ID, ...ADMIN_USER_IDS];
+  return admins.includes(id);
 }
 
 
