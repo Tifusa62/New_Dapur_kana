@@ -40,7 +40,7 @@ export default async function handler(req, res) {
 }
 
 async function handleMessage(message) {
-	console.log('✅ handleMessage triggered:', message.text);
+  console.log('✅ handleMessage triggered:', message.text);
   const chatId = message.chat.id;
   const text = message.text;
   const userId = message.from.id;
@@ -49,62 +49,89 @@ async function handleMessage(message) {
   await saveUserToDatabase(userId, userName, chatId);
 
   const isOwner = userId === OWNER_USER_ID;
-const isAdmin = isAdminUser(userId); // ← pakai fungsi yang kamu buat
+  const isAdmin = isAdminUser(userId);
 
   switch (text) {
     case '/start':
       if (isOwner) await sendOwnerWelcomeMessage(chatId, userName);
       else await sendWelcomeMessage(chatId, userName);
       break;
+
     case '🍽️ Lihat Menu':
       await showMenu(chatId);
       break;
+
     case '🛒 Pesanan Saya':
       await showMyOrders(chatId, userId);
       break;
+
     case '🌐 Buka Website':
-  await sendMessage(chatId, '🌐 Klik tombol di bawah untuk buka website:', {
-    inline_keyboard: [[
-      {
-        text: "🔗 Buka Website",
-        url: `https://tifusa62.github.io/New-Dapur-Kana/index.html?uid=${userId}`
-      }
-    ]]
-  });
-  break;
+      await sendMessage(chatId, '🌐 Klik tombol di bawah untuk buka website:', {
+        inline_keyboard: [[
+          {
+            text: "🔗 Buka Website",
+            url: `https://tifusa62.github.io/New-Dapur-Kana/index.html?uid=${userId}`
+          }
+        ]]
+      });
+      break;
+
     case '📞 Kontak':
       await sendMessage(chatId, getContactText());
       break;
+
     case '❓ Bantuan':
       await sendMessage(chatId, getHelpText());
       break;
+
     case '👑 Panel Admin':
       if (isAdmin) await showAdminPanel(chatId);
       else await sendMessage(chatId, '❌ Anda tidak memiliki akses ke panel admin.');
       break;
+
     case '📊 Laporan Pesanan':
       if (isAdmin) await showOrderReport(chatId);
       break;
+
     case '📈 Statistik':
       if (isAdmin) await showStatistics(chatId);
       break;
+
     case '👥 Data User':
       if (isAdmin) await showUserData(chatId);
       break;
+
     case '🍽️ Kelola Menu':
       if (isAdmin) await showMenuManagement(chatId);
       break;
+
     case '📢 Broadcast':
       if (isOwner) {
-        await sendMessage(chatId, `📢 Silakan ketik pesan seperti:\n\n/broadcast Halo semua!`);
+        await sendMessage(
+          chatId,
+          "📢 Silakan ketik pesan broadcast dengan format:\n\n" +
+          "`/broadcast Teks pesan`\n\n" +
+          "Atau kirim foto + caption untuk broadcast foto.",
+          { parse_mode: "Markdown" }
+        );
       }
       break;
+
     default:
-      if (text.startsWith('/broadcast ') && isOwner) {
+      // ✅ Deteksi /broadcast teks
+      if (text && text.startsWith('/broadcast ') && isOwner) {
         const msg = text.replace('/broadcast ', '');
-        await sendBroadcastMessage(msg);
-        await sendMessage(chatId, '✅ Broadcast dikirim.');
-      } else {
+        await sendBroadcastMessage({ message: msg });
+        await sendMessage(chatId, '✅ Broadcast teks terkirim.');
+      }
+      // ✅ Deteksi broadcast foto (owner kirim gambar + caption)
+      else if (message.photo && isOwner) {
+        const fileId = message.photo[message.photo.length - 1].file_id;
+        const caption = message.caption || "";
+        await sendBroadcastMessage({ message: caption, photo: fileId });
+        await sendMessage(chatId, '✅ Broadcast foto terkirim.');
+      }
+      else {
         await sendMessage(chatId, '🤖 Maaf, perintah tidak dikenali. Ketik /start.');
       }
   }
@@ -411,6 +438,7 @@ function isAdminUser(id) {
   const admins = [OWNER_USER_ID, ...ADMIN_USER_IDS];
   return admins.includes(id);
 }
+
 
 
 
