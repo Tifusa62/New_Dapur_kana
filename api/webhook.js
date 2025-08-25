@@ -361,7 +361,7 @@ async function sendBroadcastMessage({ message, photo }) {
     try {
       if (photo) {
         // broadcast foto (pakai file_id supaya cepat, tidak perlu URL)
-        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -372,7 +372,7 @@ async function sendBroadcastMessage({ message, photo }) {
         });
       } else {
         // broadcast teks
-        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -393,6 +393,7 @@ function isAdminUser(id) {
   const admins = [OWNER_USER_ID, ...ADMIN_USER_IDS];
   return admins.includes(id);
 }
+
 
 
 
