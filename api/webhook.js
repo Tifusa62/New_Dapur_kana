@@ -353,37 +353,6 @@ async function showMenuManagement(chatId) {
 const adminState = {}; 
 // { chat_id: "waiting_broadcast" }
 
-async function handleMessage(msg) {
-  const chatId = msg.chat.id;
-  const text = msg.text;
-  const fromId = msg.from.id;
-
-  // ✅ Hanya admin yang boleh broadcast
-  if (text === "/broadcast" && isAdminUser(fromId)) {
-    adminState[fromId] = "waiting_broadcast";
-    await sendMessage(chatId, "📢 Silakan ketik pesan broadcast atau kirim foto + caption.");
-    return;
-  }
-
-  // ✅ Kalau admin sedang mode broadcast
-  if (adminState[fromId] === "waiting_broadcast") {
-    if (msg.photo) {
-      // Admin mengirim foto
-      const fileId = msg.photo[msg.photo.length - 1].file_id; // ambil resolusi terbesar
-      const caption = msg.caption || "";
-      await sendBroadcastMessage({ message: caption, photo: fileId });
-      await sendMessage(chatId, "✅ Broadcast foto terkirim.");
-    } else if (text) {
-      // Admin mengirim teks
-      await sendBroadcastMessage({ message: text });
-      await sendMessage(chatId, "✅ Broadcast teks terkirim.");
-    }
-    delete adminState[fromId];
-    return;
-  }
-
-  // ... pesan normal lainnya
-}
 
 // --- Kirim pesan teks ---
 async function sendMessage(chatId, text) {
@@ -438,6 +407,7 @@ function isAdminUser(id) {
   const admins = [OWNER_USER_ID, ...ADMIN_USER_IDS];
   return admins.includes(id);
 }
+
 
 
 
