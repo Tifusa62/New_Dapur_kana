@@ -349,20 +349,6 @@ async function showMenuManagement(chatId) {
   const text = `🛠️ *Kelola Menu*\n\nKlik link berikut untuk mengelola menu Dapur Kana:\n${url}`;
   await sendMessage(chatId, text);
 }
-// --- STATE SEMENTARA UNTUK ADMIN YANG AKTIF BROADCAST ---
-const adminState = {}; 
-// { chat_id: "waiting_broadcast" }
-
-
-// --- Kirim pesan teks ---
-async function sendMessage(chatId, text) {
-  await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text })
-  });
-}
-
 // --- Broadcast ke semua user ---
 async function sendBroadcastMessage({ message, photo }) {
   const { data: users, error } = await supabase.from("user_telegram").select("chat_id");
@@ -407,6 +393,7 @@ function isAdminUser(id) {
   const admins = [OWNER_USER_ID, ...ADMIN_USER_IDS];
   return admins.includes(id);
 }
+
 
 
 
