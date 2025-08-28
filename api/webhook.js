@@ -652,40 +652,56 @@ async function showAdminPanel(chatId) {
 
 
 async function showOrderReport(chatId) {
-  const today = new Date();
-  const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
-  const endOfDay = new Date(today.setHours(23, 59, 59, 999)).toISOString();
+  const { start: startOfDay, end: endOfDay } = getDateRange("today");
+  const { start: startOfMonth, end: endOfMonth } = getDateRange("month");
 
-  const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
-  const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59).toISOString();
-
-  // Query Supabase
-  const { data: todayOrders } = await supabase
+  // Ambil pesanan ID utk hari ini
+  const { data: todayPesanan } = await supabase
     .from("pesanan")
-    .select("total_harga")
+    .select("id")
     .gte("created_at", startOfDay)
     .lte("created_at", endOfDay);
 
-  const { data: monthOrders } = await supabase
+  const todayIds = todayPesanan?.map(p => p.id) || [];
+
+  // Ambil pesanan ID utk bulan ini
+  const { data: monthPesanan } = await supabase
     .from("pesanan")
-    .select("total_harga")
+    .select("id")
     .gte("created_at", startOfMonth)
     .lte("created_at", endOfMonth);
 
-  const totalToday = todayOrders?.length || 0;
-  const omzetToday = todayOrders?.reduce((a, b) => a + (b.total_harga || 0), 0) || 0;
+  const monthIds = monthPesanan?.map(p => p.id) || [];
 
-  const totalMonth = monthOrders?.length || 0;
-  const omzetMonth = monthOrders?.reduce((a, b) => a + (b.total_harga || 0), 0) || 0;
+  // Hitung omzet dari item_pesanan
+  let omzetToday = 0;
+  let omzetMonth = 0;
 
-  const bulanNama = new Date().toLocaleString("id-ID", { month: "long", year: "numeric" });
+  if (todayIds.length > 0) {
+    const { data: itemsToday } = await supabase
+      .from("item_pesanan")
+      .select("subtotal")
+      .in("id_pesanan", todayIds);
+
+    omzetToday = itemsToday?.reduce((a, b) => a + (b.subtotal || 0), 0) || 0;
+  }
+
+  if (monthIds.length > 0) {
+    const { data: itemsMonth } = await supabase
+      .from("item_pesanan")
+      .select("subtotal")
+      .in("id_pesanan", monthIds);
+
+    omzetMonth = itemsMonth?.reduce((a, b) => a + (b.subtotal || 0), 0) || 0;
+  }
+
   const tglHariIni = new Date().toLocaleDateString("id-ID", { dateStyle: "long" });
+  const bulanNama = new Date().toLocaleString("id-ID", { month: "long", year: "numeric" });
 
   let text = `📊 *Laporan Pesanan*\n\n`;
-  text += `📅 Hari ini (${tglHariIni})\n• Total Pesanan: ${totalToday}\n• Omzet: Rp${omzetToday.toLocaleString()}\n\n`;
-  text += `📅 Bulan ini (${bulanNama})\n• Total Pesanan: ${totalMonth}\n• Omzet: Rp${omzetMonth.toLocaleString()}`;
+  text += `📅 Hari ini (${tglHariIni})\n• Total Pesanan: ${todayIds.length}\n• Omzet: Rp${omzetToday.toLocaleString()}\n\n`;
+  text += `📅 Bulan ini (${bulanNama})\n• Total Pesanan: ${monthIds.length}\n• Omzet: Rp${omzetMonth.toLocaleString()}`;
 
-  // Tombol inline
   const keyboard = {
     inline_keyboard: [
       [
@@ -843,28 +859,11 @@ async function handleCallbackQuery(query) {
   }
 }
 async function showOrderDetail(chatId, mode, customDate = null) {
-  let start, end;
-
-  if (mode === "today") {
-    const today = new Date();
-    start = new Date(today.setHours(0, 0, 0, 0)).toISOString();
-    end = new Date(today.setHours(23, 59, 59, 999)).toISOString();
-  } else if (mode === "month") {
-    const now = new Date();
-    start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-    end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
-  } else if (mode === "date") {
-    start = new Date(customDate + "T00:00:00").toISOString();
-    end = new Date(customDate + "T23:59:59").toISOString();
-  } else if (mode === "month_custom") {
-    const [year, month] = customDate.split("-");
-    start = new Date(year, month - 1, 1).toISOString();
-    end = new Date(year, month, 0, 23, 59, 59).toISOString();
-  }
+  const { start, end } = getDateRange(mode, customDate);
 
   const { data: pesananList } = await supabase
     .from("pesanan")
-    .select("id, nama, no_hp, alamat, metode, total_harga, created_at, status")
+    .select("id, nama, no_tlp, alamat, metode, created_at, akses_via")
     .gte("created_at", start)
     .lte("created_at", end)
     .order("created_at", { ascending: true });
@@ -877,29 +876,20 @@ async function showOrderDetail(chatId, mode, customDate = null) {
   let reportText = `📋 *Rincian Pesanan (${mode})*\n\n`;
 
   for (let p of pesananList) {
-    totalOmzet += p.total_harga || 0;
-
+    // Ambil item untuk pesanan ini
     const { data: itemList } = await supabase
       .from("item_pesanan")
-      .select("id_menu, jumlah, harga_satuan")
+      .select("nama_item, jumlah, harga_satuan, subtotal")
       .eq("id_pesanan", p.id);
-
-    const idMenuList = itemList?.map(it => it.id_menu) || [];
-    let menuMap = {};
-    if (idMenuList.length > 0) {
-      const { data: menuList } = await supabase
-        .from("menu")
-        .select("id, name")
-        .in("id", idMenuList);
-      menuList.forEach(m => (menuMap[m.id] = m.name));
-    }
 
     const itemsText = itemList && itemList.length > 0
       ? itemList.map(it => {
-          const nama = menuMap[it.id_menu] || "Item?";
-          return `- ${nama} x${it.jumlah} @Rp${(it.harga_satuan || 0).toLocaleString()}`;
+          return `- ${it.nama_item} x${it.jumlah} @Rp${(it.harga_satuan || 0).toLocaleString()} = Rp${(it.subtotal || 0).toLocaleString()}`;
         }).join("\n")
       : "Tidak ada item";
+
+    const totalPesanan = itemList?.reduce((a, b) => a + (b.subtotal || 0), 0) || 0;
+    totalOmzet += totalPesanan;
 
     const tgl = new Date(p.created_at).toLocaleString("id-ID", {
       dateStyle: "medium",
@@ -907,12 +897,42 @@ async function showOrderDetail(chatId, mode, customDate = null) {
       timeZone: "Asia/Jakarta"
     });
 
-    reportText += `🆔 *ID:* ${p.id}\n👤 ${p.nama} | 📞 ${p.no_hp}\n🏠 ${p.alamat}\n📅 ${tgl}\n💳 ${p.metode} | 📦 ${p.status}\n🍽️ Item:\n${itemsText}\n💰 Rp${(p.total_harga || 0).toLocaleString()}\n\n`;
+    reportText += `🆔 *ID:* ${p.id}\n👤 ${p.nama} | 📞 ${p.no_tlp}\n🏠 ${p.alamat}\n📅 ${tgl}\n💳 ${p.metode} | 🌐 ${p.akses_via || "-"}\n🍽️ Item:\n${itemsText}\n💰 Total: Rp${totalPesanan.toLocaleString()}\n\n`;
   }
 
   reportText += `📦 Total Pesanan: ${pesananList.length}\n💰 Omzet: Rp${totalOmzet.toLocaleString()}`;
 
   await sendMessage(chatId, reportText);
+}
+
+function getDateRange(mode, customDate = null) {
+  const now = new Date();
+  let start, end;
+
+  if (mode === "today") {
+    const startLocal = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+    const endLocal   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    start = startLocal.toISOString(); 
+    end   = endLocal.toISOString();
+  } else if (mode === "month") {
+    const startLocal = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+    const endLocal   = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+    start = startLocal.toISOString();
+    end   = endLocal.toISOString();
+  } else if (mode === "date") {
+    const d = new Date(customDate + "T00:00:00+07:00"); 
+    const d2 = new Date(customDate + "T23:59:59+07:00");
+    start = d.toISOString();
+    end   = d2.toISOString();
+  } else if (mode === "month_custom") {
+    const [year, month] = customDate.split("-");
+    const startLocal = new Date(year, month - 1, 1, 0, 0, 0);
+    const endLocal   = new Date(year, month, 0, 23, 59, 59);
+    start = startLocal.toISOString();
+    end   = endLocal.toISOString();
+  }
+
+  return { start, end };
 }
 
 // --- Cek admin ---
