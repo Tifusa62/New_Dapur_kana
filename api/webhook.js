@@ -446,8 +446,8 @@ async function sendOwnerWelcomeMessage(chatId, userName) {
 async function showMenu(chatId) {
   const { data: menu, error } = await supabase
     .from('menu')
-    .select('*')
-    .order('kategori', { ascending: true });
+    .select('name, price, category')
+    .order('category', { ascending: true });
 
   if (error) {
     console.error(error);
@@ -461,7 +461,7 @@ async function showMenu(chatId) {
   // Kelompokkan menu berdasarkan kategori
   const grouped = {};
   menu.forEach((m) => {
-    const kategori = m.kategori || 'Lainnya';
+    const kategori = m.category || 'Lainnya';
     if (!grouped[kategori]) grouped[kategori] = [];
     grouped[kategori].push(m);
   });
@@ -471,18 +471,17 @@ async function showMenu(chatId) {
 
   Object.keys(grouped).forEach((kategori) => {
     text += `*${kategori}*\n`;
-    grouped[kategori].forEach((m, i) => {
-      const harga = m.harga
-        ? `Rp ${Number(m.harga).toLocaleString()}`
+    grouped[kategori].forEach((m) => {
+      const harga = m.price
+        ? `Rp ${Number(m.price).toLocaleString()}`
         : 'Harga tidak tersedia';
-      text += `- ${m.nama} – ${harga}\n`;
+      text += `- ${m.name} – ${harga}\n`;
     });
     text += `\n`;
   });
 
   await sendMessage(chatId, text);
 }
-
 
 
 async function showMyOrders(chatId, userId) {
@@ -954,4 +953,5 @@ function isAdminUser(id) {
   return admins.includes(id);
 
 }
+
 
