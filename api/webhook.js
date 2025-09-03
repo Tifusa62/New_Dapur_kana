@@ -444,33 +444,43 @@ async function sendOwnerWelcomeMessage(chatId, userName) {
 }
 
 async function showMenu(chatId) {
+  const { data: menu, error } = await supabase
+    .from('menu')
+    .select('*')
+    .order('kategori', { ascending: true });
 
-  const { data: menu } = await supabase.from('menu').select('*');
+  if (error) {
+    console.error(error);
+    return sendMessage(chatId, '❌ Gagal mengambil data menu');
+  }
 
-  if (!menu || menu.length === 0) return sendMessage(chatId, '📭 Menu belum tersedia');
+  if (!menu || menu.length === 0) {
+    return sendMessage(chatId, '📭 Menu belum tersedia');
+  }
 
+  // Kelompokkan menu berdasarkan kategori
+  const grouped = {};
+  menu.forEach((m) => {
+    const kategori = m.kategori || 'Lainnya';
+    if (!grouped[kategori]) grouped[kategori] = [];
+    grouped[kategori].push(m);
+  });
 
+  // Susun teks
+  let text = `*📋 MENU DAPUR KANA:*\n\n`;
 
-  let text = `*MENU DAPUR KANA:*
-
-\n`;
-
-  menu.forEach((m, i) => {
-
-    const harga = (m.price !== null && m.price !== undefined)
-
-  ? `Rp ${Number(m.price).toLocaleString()}`
-
-  : 'Harga tidak tersedia';
-
-
-
-text += `${i + 1}. *${m.name}* - ${harga}\n${m.description || ''}\n\n`;
-
+  Object.keys(grouped).forEach((kategori) => {
+    text += `*${kategori}*\n`;
+    grouped[kategori].forEach((m, i) => {
+      const harga = m.harga
+        ? `Rp ${Number(m.harga).toLocaleString()}`
+        : 'Harga tidak tersedia';
+      text += `- ${m.nama} – ${harga}\n`;
+    });
+    text += `\n`;
   });
 
   await sendMessage(chatId, text);
-
 }
 
 
@@ -944,3 +954,4 @@ function isAdminUser(id) {
   return admins.includes(id);
 
 }
+
